@@ -9,7 +9,7 @@ namespace AuthProject.IntegrationTests.Infraestructure
         public ApiFactory<Program> Factory;
         public HttpClient Client;
 
-        private static WebApplicationFactoryClientOptions ClientOptions = new WebApplicationFactoryClientOptions
+        private static readonly WebApplicationFactoryClientOptions ClientOptions = new()
         {
             AllowAutoRedirect = true,
             BaseAddress = new Uri("http://localhost"),
@@ -21,10 +21,13 @@ namespace AuthProject.IntegrationTests.Infraestructure
             Factory = new ApiFactory<Program>();
             Client = Factory.CreateClient(ClientOptions);
         }
-        public void Dispose()
+
+        void IDisposable.Dispose()
         {
             Client?.Dispose();
             Factory?.Dispose();
+            GC.SuppressFinalize(this);
+
         }
     }
 }

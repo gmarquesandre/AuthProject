@@ -13,6 +13,6 @@ namespace AuthProject.IntegrationTests.Infraestructure
                
             });
            
-        }
+        }       
     }
 }

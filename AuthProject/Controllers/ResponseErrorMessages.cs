@@ -4,7 +4,7 @@
     {
         public ResponseErrorMessages()
         {
-            Messages = new();
+            Messages = [];
         }
 
         public List<string> Messages { get; set; }

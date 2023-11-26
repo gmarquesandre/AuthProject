@@ -49,7 +49,7 @@ namespace AuthProject.Startup
                 context.Database.GetAppliedMigrations();   // Check the database connection
                 return true;
             }
-            catch (Exception ex)
+            catch 
             {
                 return false;
             }

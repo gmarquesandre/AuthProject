@@ -10,15 +10,10 @@ using static AuthProject.Models.AuthController;
 namespace AuthProject.IntegrationTests
 {
     [Collection(nameof(IntegrationApiTestsFixtureCollection))]
-    public class TestOperations
+    public class TestOperations(IntegrationTestsFixture fixture)
     {
-        private readonly IntegrationTestsFixture _fixture;
+        private readonly IntegrationTestsFixture _fixture = fixture;
         private readonly Faker _faker = new();
-        public TestOperations(IntegrationTestsFixture fixture)
-        {
-            _fixture = fixture;
-        }
-
 
         [Trait("Auth", "Api Testing")]
         [Fact(DisplayName ="Teste Operações")]
@@ -37,8 +32,7 @@ namespace AuthProject.IntegrationTests
             Assert.Equal(HttpStatusCode.OK, responseAuthenticate.StatusCode);
 
            
-            var responseRefreshToken = await _fixture.Client.PostAsJsonAsync("/api/identity/refresh-token", new RequestRefreshToken() { RefreshToken = authenticateObject.RefreshToken});
-            string responseRefreshTokenString = await responseRefreshToken.Content.ReadAsStringAsync();
+            var responseRefreshToken = await _fixture.Client.PostAsJsonAsync("/api/identity/refresh-token", new RequestRefreshToken() { RefreshToken = authenticateObject.RefreshToken});   
             Assert.Equal(HttpStatusCode.OK, responseRefreshToken.StatusCode);
 
         }

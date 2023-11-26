@@ -51,7 +51,7 @@ namespace AuthProject.Controllers
 
         protected bool ResponseHasErrors(ResponseResult responseResult)
         {
-            if (responseResult == null || !responseResult.Errors.Messages.Any()) return false;
+            if (responseResult == null || responseResult.Errors.Messages.Count == 0) return false;
 
             foreach (var errorMessage in responseResult.Errors.Messages)
             {
