@@ -2,12 +2,13 @@ using AuthProject.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NetDevPack.Identity.Interfaces;
+using static AuthProject.Models.AuthController;
 
 namespace AuthProject.Controllers
 {
     [ApiController]
     [Route("api/identity")]
-    public class AuthController : MainController
+    public partial class AuthController : MainController
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IJwtBuilder _jwtBuilder;
@@ -81,17 +82,16 @@ namespace AuthProject.Controllers
             AddErrorToStack("User or Password incorrect");
             return CustomResponse();
         }
-
         [HttpPost("refresh-token")]
-        public async Task<ActionResult> RefreshToken([FromBody] string refreshToken)
+        public async Task<ActionResult> RefreshToken(RequestRefreshToken request)
         {
-            if (string.IsNullOrEmpty(refreshToken))
+            if (string.IsNullOrEmpty(request.RefreshToken))
             {
                 AddErrorToStack("Invalid Refresh Token");
                 return CustomResponse();
             }
 
-            var token = await _jwtBuilder.ValidateRefreshToken(refreshToken);
+            var token = await _jwtBuilder.ValidateRefreshToken(request.RefreshToken);
 
             if (!token.IsValid)
             {
@@ -103,7 +103,7 @@ namespace AuthProject.Controllers
                                         .WithUserId(token.UserId)
                                         .WithJwtClaims()
                                         .WithUserClaims()
-                                        .WithUserRoles()
+                                        .WithUserRoles()                                        
                                         .WithRefreshToken()
                                         .BuildUserResponse();
 

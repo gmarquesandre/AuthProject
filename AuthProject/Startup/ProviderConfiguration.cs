@@ -25,7 +25,7 @@ namespace AuthProject.Startup
             options => options.UseSqlServer(_connectionString, sql => sql.MigrationsAssembly(MigrationAssembly));
 
         public Action<DbContextOptionsBuilder> MySql =>
-            options => options.UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString), sql => sql.MigrationsAssembly(MigrationAssembly));
+            options => options.UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString), sql => sql.MigrationsAssembly(MigrationAssembly));       
 
         public Action<DbContextOptionsBuilder> Postgre =>
             options => 
@@ -34,16 +34,15 @@ namespace AuthProject.Startup
                 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
             };
 
-    public Action<DbContextOptionsBuilder> Sqlite =>
-            options => options.UseSqlite(_connectionString, sql => sql.MigrationsAssembly(MigrationAssembly));
-
+        public Action<DbContextOptionsBuilder> Sqlite =>
+                options => options.UseSqlite(_connectionString, sql => sql.MigrationsAssembly(MigrationAssembly));
 
         /// <summary>
         /// it's just a tuple. Returns 2 parameters.
         /// Trying to improve readability at ConfigureServices
         /// </summary>
         public static (DatabaseType, string) DetectDatabase(IConfiguration configuration) => (
-            configuration.GetValue("AppSettings:DatabaseType", DatabaseType.None),
+            configuration.GetValue("Appsettings:DatabaseType", DatabaseType.None),
             configuration.GetConnectionString("DefaultConnection"));
     }
 

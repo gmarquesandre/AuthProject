@@ -23,7 +23,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+DbMigrationHelpers.EnsureSeedData(app).Wait();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRequestLocalization();
