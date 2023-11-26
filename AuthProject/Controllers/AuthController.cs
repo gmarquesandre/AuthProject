@@ -6,19 +6,21 @@ using NetDevPack.Identity.Interfaces;
 namespace AuthProject.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/identity")]
     public class AuthController : MainController
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IJwtBuilder _jwtBuilder;
-        public AuthController(UserManager<IdentityUser> userManager, IJwtBuilder jwtBuilder)
+        private readonly SignInManager<IdentityUser> _signInManager;
+        public AuthController(UserManager<IdentityUser> userManager, IJwtBuilder jwtBuilder, SignInManager<IdentityUser> signInManager)
         {
             _userManager = userManager;
             _jwtBuilder = jwtBuilder;
+            _signInManager = signInManager;
         }
 
         [HttpPost("new-account")]
-        public async Task<IActionResult> Register(CreateUserDto newUser)
+        public async Task<IActionResult> Register(CreateUser newUser)
         {
             var user = new IdentityUser
             {
@@ -28,17 +30,9 @@ namespace AuthProject.Controllers
             };
 
             var result = await _userManager.CreateAsync(user, newUser.Password);
-
+            
             if (result.Succeeded)
-            {
-                //var customerResult = await RegisterUser(newUser);
-
-                //if (!customerResult.ValidationResult.IsValid)
-                //{
-                //    await _userManager.DeleteAsync(user);
-                //    return CustomResponse(customerResult.ValidationResult);
-                //}
-
+            {                
                 var jwt = await _jwtBuilder
                                             .WithEmail(newUser.Email)
                                             .WithJwtClaims()
@@ -56,6 +50,64 @@ namespace AuthProject.Controllers
             }
 
             return CustomResponse();
+        }
+        [HttpPost("auth")]
+        public async Task<ActionResult> Login(UserLogin userLogin)
+        {
+            if (!ModelState.IsValid) return CustomResponse(ModelState);
+
+            var result = await _signInManager.PasswordSignInAsync(userLogin.Email, userLogin.Password,
+                false, true);
+
+            if (result.Succeeded)
+            {
+
+                var jwt = await _jwtBuilder
+                                            .WithEmail(userLogin.Email)
+                                            .WithJwtClaims()
+                                            .WithUserClaims()
+                                            .WithUserRoles()
+                                            .WithRefreshToken()
+                                            .BuildUserResponse();
+                return CustomResponse(jwt);
+            }
+
+            if (result.IsLockedOut)
+            {
+                AddErrorToStack("User temporary blocked. Too many tries.");
+                return CustomResponse();
+            }
+
+            AddErrorToStack("User or Password incorrect");
+            return CustomResponse();
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult> RefreshToken([FromBody] string refreshToken)
+        {
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                AddErrorToStack("Invalid Refresh Token");
+                return CustomResponse();
+            }
+
+            var token = await _jwtBuilder.ValidateRefreshToken(refreshToken);
+
+            if (!token.IsValid)
+            {
+                AddErrorToStack("Expired Refresh Token");
+                return CustomResponse();
+            }
+
+            var jwt = await _jwtBuilder
+                                        .WithUserId(token.UserId)
+                                        .WithJwtClaims()
+                                        .WithUserClaims()
+                                        .WithUserRoles()
+                                        .WithRefreshToken()
+                                        .BuildUserResponse();
+
+            return CustomResponse(jwt);
         }
 
     }
