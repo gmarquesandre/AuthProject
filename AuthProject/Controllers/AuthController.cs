@@ -1,24 +1,27 @@
 using AuthProject.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using NetDevPack.Identity.Interfaces;
+using NetDevPack.Security.Jwt.Core.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using static AuthProject.Models.AuthController;
+using JwtRegisteredClaimNames = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 namespace AuthProject.Controllers
 {
     [ApiController]
     [Route("api/identity")]
-    public partial class AuthController : MainController
+    public partial class AuthController(UserManager<IdentityUser> userManager, IJwtBuilder jwtBuilder, SignInManager<IdentityUser> signInManager, IJwtService jwtService) : MainController
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly IJwtBuilder _jwtBuilder;
-        private readonly SignInManager<IdentityUser> _signInManager;
-        public AuthController(UserManager<IdentityUser> userManager, IJwtBuilder jwtBuilder, SignInManager<IdentityUser> signInManager)
-        {
-            _userManager = userManager;
-            _jwtBuilder = jwtBuilder;
-            _signInManager = signInManager;
-        }
+        private readonly UserManager<IdentityUser> _userManager = userManager;
+        private readonly IJwtBuilder _jwtBuilder = jwtBuilder;
+        private readonly SignInManager<IdentityUser> _signInManager = signInManager;
+        private readonly IJwtService _jwtService = jwtService;
 
         [HttpPost("new-account")]
         public async Task<IActionResult> Register(CreateUser newUser)
@@ -31,9 +34,9 @@ namespace AuthProject.Controllers
             };
 
             var result = await _userManager.CreateAsync(user, newUser.Password);
-            
+
             if (result.Succeeded)
-            {                
+            {
                 var jwt = await _jwtBuilder
                                             .WithEmail(newUser.Email)
                                             .WithJwtClaims()
@@ -63,6 +66,24 @@ namespace AuthProject.Controllers
             if (result.Succeeded)
             {
 
+
+                var signingCredentials = await _jwtService.GetCurrentSigningCredentials();
+
+
+
+                //var token = new JwtSecurityToken(
+                //            issuer: "teste",
+                //            audience: "qualquer",
+                //            claims: new List<Claim>()
+                //            {
+                //                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                //                new(JwtRegisteredClaimNames.Sub, result.)
+                //            }
+                //        );
+
+                //string jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+
                 var jwt = await _jwtBuilder
                                             .WithEmail(userLogin.Email)
                                             .WithJwtClaims()
@@ -81,6 +102,12 @@ namespace AuthProject.Controllers
 
             AddErrorToStack("User or Password incorrect");
             return CustomResponse();
+        }
+        [HttpGet("authenticated-request")]
+        [Authorize]
+        public IActionResult ValidateTokenAsync()
+        {
+            return Ok("Oi");
         }
         [HttpPost("refresh-token")]
         public async Task<ActionResult> RefreshToken(RequestRefreshToken request)
@@ -103,7 +130,7 @@ namespace AuthProject.Controllers
                                         .WithUserId(token.UserId)
                                         .WithJwtClaims()
                                         .WithUserClaims()
-                                        .WithUserRoles()                                        
+                                        .WithUserRoles()
                                         .WithRefreshToken()
                                         .BuildUserResponse();
 

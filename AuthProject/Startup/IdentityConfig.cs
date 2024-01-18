@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Tokens;
 using NetDevPack.Identity.Jwt;
+using NetDevPack.Security.Jwt.Core;
 using NetDevPack.Security.PasswordHasher.Core;
+using System.Diagnostics;
 
 namespace AuthProject.Startup
 {
@@ -12,13 +17,16 @@ namespace AuthProject.Startup
             services.AddMemoryCache()
                 .AddDataProtection();
 
+
+
             services.AddJwtConfiguration(configuration, "AppSettings")
                 .AddNetDevPackIdentity<IdentityUser>(opt => {
                     opt.CacheTime = TimeSpan.FromMinutes(5);
-                    opt.DaysUntilExpire = 0;                    
+                    opt.KeyPrefix = "MTEST";
                 })
-                .PersistKeysToDatabaseStore<AuthDbContext>();          
+                .PersistKeysToDatabaseStore<AuthDbContext>();
 
+          
             services.AddIdentity<IdentityUser, IdentityRole>(opt =>
             {
                 opt.Password.RequireDigit = false;
@@ -35,6 +43,7 @@ namespace AuthProject.Startup
             services.UpgradePasswordSecurity()
                .WithStrengthen(PasswordHasherStrength.Moderate)
                .UseArgon2<IdentityUser>();
+
 
         }
     }

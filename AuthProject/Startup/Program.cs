@@ -1,4 +1,5 @@
 using AuthProject.Startup;
+using NetDevPack.Identity.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,9 +10,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<IAspNetUser, AspNetUser>();
+
 builder.Services.AddIdentityConfiguration(builder.Configuration);
 
-builder.Services.AddLocalization();
+builder.Services.AddJwksManager().UseJwtValidation().AddNetDevPackIdentity();
 
 var app = builder.Build();
 
@@ -24,9 +27,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 DbMigrationHelpers.EnsureSeedData(app).Wait();
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseRequestLocalization();
+
+app.UseRouting();
+app.UseAuthConfiguration();
+app.UseJwksDiscovery();
 app.MapControllers();
 
 app.Run();
