@@ -14,7 +14,9 @@ builder.Services.AddScoped<IAspNetUser, AspNetUser>();
 
 builder.Services.AddIdentityConfiguration(builder.Configuration);
 
-builder.Services.AddJwksManager().UseJwtValidation().AddNetDevPackIdentity();
+builder.Services.AddJwksManager()
+    .UseJwtValidation().AddNetDevPackIdentity()
+    .PersistKeysToDatabaseStore<AuthDbContext>();
 
 var app = builder.Build();
 
